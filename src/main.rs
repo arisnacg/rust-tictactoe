@@ -1,18 +1,49 @@
 #![allow(unused)]
 
+use std::io;
 use std::{fmt::format, usize};
 
 fn main() {
     const TOTAL_ROWS: usize = 3;
     const TOTAL_COLUMNS: usize = 3;
     let mut board = create_board(TOTAL_ROWS, TOTAL_COLUMNS);
+    let mut game_end = false;
+    let player1_char = ask_player_char();
+    let player2_char = (if player1_char == 'X' { 'O' } else { 'X' });
+    println!("p1: {}, p2: {}", player1_char, player2_char);
+}
 
-    fill_box(&mut board, 0, 0, 'O');
-    fill_box(&mut board, 1, 0, 'X');
-    fill_box(&mut board, 1, 1, 'O');
-    fill_box(&mut board, 1, 2, 'X');
-    fill_box(&mut board, 2, 2, 'O');
-    print_board(board.clone());
+fn ask_player_char() -> char {
+    println!("Chose X or O :");
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read line");
+    let character: char = input.trim().chars().next().expect("No input provided.");
+    return character.to_ascii_uppercase();
+}
+
+fn is_win(board: &mut Vec<Vec<char>>, player_char: char) -> bool {
+    let x_length = board.len();
+    for i in 0..x_length {
+        // check rows
+        if board[i][0] == player_char && board[i][1] == player_char && board[i][2] == player_char {
+            return true;
+        }
+        // check columns
+        if board[0][i] == player_char && board[1][i] == player_char && board[2][i] == player_char {
+            return true;
+        }
+    }
+    // check diagonals
+    if board[0][0] == player_char && board[1][1] == player_char && board[2][2] == player_char {
+        return true;
+    }
+    if board[0][2] == player_char && board[1][1] == player_char && board[2][0] == player_char {
+        return true;
+    }
+    // no win condition found
+    return false;
 }
 
 // add char into board box
