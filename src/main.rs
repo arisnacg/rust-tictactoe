@@ -6,11 +6,27 @@ use std::{fmt::format, usize};
 fn main() {
     const TOTAL_ROWS: usize = 3;
     const TOTAL_COLUMNS: usize = 3;
+    const MAX_FILL: usize = TOTAL_ROWS * TOTAL_COLUMNS;
     let mut board = create_board(TOTAL_ROWS, TOTAL_COLUMNS);
     let mut game_end = false;
     let player1_char = ask_player_char();
     let player2_char = (if player1_char == 'X' { 'O' } else { 'X' });
-    println!("p1: {}, p2: {}", player1_char, player2_char);
+    fill_box(&mut board, 0, 0, player1_char);
+    let ai = ai_move(board);
+    println!("{}, {}", ai[0], ai[1]);
+}
+
+fn ai_move(board: Vec<Vec<char>>) -> [usize; 2] {
+    let x_length = board.len();
+    let y_length = board[0].len();
+    for i in 0..x_length {
+        for j in 0..y_length {
+            if board[i][j] == ' ' {
+                return [i, j];
+            }
+        }
+    }
+    return [0, 0];
 }
 
 fn ask_player_char() -> char {
