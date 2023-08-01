@@ -8,12 +8,36 @@ fn main() {
     const TOTAL_COLUMNS: usize = 3;
     const MAX_FILL: usize = TOTAL_ROWS * TOTAL_COLUMNS;
     let mut board = create_board(TOTAL_ROWS, TOTAL_COLUMNS);
-    let mut game_end = false;
-    let player1_char = ask_player_char();
-    let player2_char = (if player1_char == 'X' { 'O' } else { 'X' });
-    fill_box(&mut board, 0, 0, player1_char);
-    let ai = ai_move(board);
-    println!("{}, {}", ai[0], ai[1]);
+    // let mut game_end = false;
+    // let player1_char = ask_player_char();
+    // let player2_char = (if player1_char == 'X' { 'O' } else { 'X' });
+    let player_move = ask_player_move();
+    let arr_move = move_num_to_array(player_move, TOTAL_ROWS);
+    let num_move = move_array_to_num(arr_move, TOTAL_ROWS);
+    println!(
+        "player move: {} -> {}, {} -> {}",
+        player_move, arr_move[0], arr_move[1], num_move
+    );
+}
+
+fn move_array_to_num(move_arr: [usize; 2], board_rows: usize) -> usize {
+    return move_arr[0] * board_rows + move_arr[1] + 1;
+}
+
+fn move_num_to_array(num: usize, board_rows: usize) -> [usize; 2] {
+    let i: usize = (num - 1) / board_rows;
+    let j: usize = (num - 1) % board_rows;
+    return [i, j];
+}
+
+fn ask_player_move() -> usize {
+    println!("Your move (1-9): ");
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read line");
+    let player_move: usize = input.trim().parse().expect("Please enter a number");
+    return player_move;
 }
 
 fn ai_move(board: Vec<Vec<char>>) -> [usize; 2] {
