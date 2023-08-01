@@ -8,16 +8,44 @@ fn main() {
     const TOTAL_COLUMNS: usize = 3;
     const MAX_FILL: usize = TOTAL_ROWS * TOTAL_COLUMNS;
     let mut board = create_board(TOTAL_ROWS, TOTAL_COLUMNS);
-    // let mut game_end = false;
-    // let player1_char = ask_player_char();
-    // let player2_char = (if player1_char == 'X' { 'O' } else { 'X' });
-    let player_move = ask_player_move();
-    let arr_move = move_num_to_array(player_move, TOTAL_ROWS);
-    let num_move = move_array_to_num(arr_move, TOTAL_ROWS);
-    println!(
-        "player move: {} -> {}, {} -> {}",
-        player_move, arr_move[0], arr_move[1], num_move
-    );
+    let mut game_end = false;
+    let p1_char = ask_player_char();
+    let p2_char = (if p1_char == 'X' { 'O' } else { 'X' });
+    let mut filled_box_count = 0;
+    let mut winner = ' ';
+    while filled_box_count < MAX_FILL {
+        print_board(board.clone());
+        loop {
+            let p1_move_num = ask_player_move();
+            let p1_move = move_num_to_array(p1_move_num, TOTAL_ROWS);
+            if board[p1_move[0]][p1_move[1]] == ' ' {
+                fill_box(&mut board, p1_move[0], p1_move[1], p1_char);
+                filled_box_count += 1;
+                break;
+            } else {
+                println!("{} is already filled!", p1_move_num)
+            }
+        }
+        if is_win(board.clone(), p1_char) {
+            winner = p1_char;
+            break;
+        }
+        let p2_move = ai_move(board.clone());
+        fill_box(&mut board, p2_move[0], p2_move[1], p2_char);
+        filled_box_count += 1;
+        if is_win(board.clone(), p2_char) {
+            winner = p2_char;
+            break;
+        }
+    }
+    if winner == p1_char {
+        println!("YOU WIN!");
+    } else if winner == p2_char {
+        println!("YOU LOSE!");
+    } else {
+        println!("DRAW!");
+    }
+    print_board(board.clone());
 }
 
 fn move_array_to_num(move_arr: [usize; 2], board_rows: usize) -> usize {
@@ -63,7 +91,7 @@ fn ask_player_char() -> char {
     return character.to_ascii_uppercase();
 }
 
-fn is_win(board: &mut Vec<Vec<char>>, player_char: char) -> bool {
+fn is_win(board: Vec<Vec<char>>, player_char: char) -> bool {
     let x_length = board.len();
     for i in 0..x_length {
         // check rows
