@@ -305,10 +305,5 @@ fn print_board(board: Vec<Vec<char>>) {
 
 // create tic tac toe board
 fn create_board() -> Vec<Vec<char>> {
-    let mut array: Vec<Vec<char>> = Vec::new();
-    for _ in 0..TOTAL_ROWS {
-        let row: Vec<char> = vec![' '; TOTAL_COLUMNS];
-        array.push(row);
-    }
-    return array;
+    vec![vec![' '; TOTAL_COLUMNS]; TOTAL_ROWS]
 }
