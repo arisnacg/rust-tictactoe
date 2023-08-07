@@ -17,12 +17,19 @@ const TOTAL_COLUMNS: usize = 3;
 const MAX_FILL: usize = TOTAL_ROWS * TOTAL_COLUMNS;
 
 fn main() {
+    if let Err(e) = play() {
+        eprintln!("{e}");
+        std::process::exit(1);
+    }
+}
+
+fn play() -> Result<(),String> {
     let ref mut board = create_board();
 
     let mut game_end = false;
     clearscreen();
     println!("[*] WELCOME TO TICTACTOE GAME [*]");
-    let human_char = ask_player_char();
+    let human_char = ask_player_char()?;
     let ai_char = (if human_char == 'X' { 'O' } else { 'X' });
     let mut filled_box_count = 0;
     let mut winner = ' ';
@@ -31,8 +38,8 @@ fn main() {
     while filled_box_count < MAX_FILL {
         if ai_char == 'X' {
             clearscreen();
-            let ai_move = ai_best_move(board, ai_char, human_char);
-            fill_box(board, ai_move[0], ai_move[1], ai_char);
+            let ai_move = ai_best_move(board, ai_char, human_char)?;
+            fill_box(board, ai_move[0], ai_move[1], ai_char)?;
             filled_box_count += 1;
             print_board(board);
             println!(
@@ -43,8 +50,8 @@ fn main() {
                 winner = ai_char;
                 break;
             }
-            let human_move = ask_player_move(board, human_char);
-            fill_box(board, human_move[0], human_move[1], human_char);
+            let human_move = ask_player_move(board, human_char)?;
+            fill_box(board, human_move[0], human_move[1], human_char)?;
             filled_box_count += 1;
             if is_win(board, human_char) {
                 winner = human_char;
@@ -58,15 +65,15 @@ fn main() {
             } else {
                 println!("[+] AI move: O -> {}", ai_last_move);
             }
-            let human_move = ask_player_move(board, human_char);
-            fill_box(board, human_move[0], human_move[1], human_char);
+            let human_move = ask_player_move(board, human_char)?;
+            fill_box(board, human_move[0], human_move[1], human_char)?;
             filled_box_count += 1;
             if is_win(board, human_char) {
                 winner = human_char;
                 break;
             }
-            let ai_move = ai_best_move(board, ai_char, human_char);
-            fill_box(board, ai_move[0], ai_move[1], ai_char);
+            let ai_move = ai_best_move(board, ai_char, human_char)?;
+            fill_box(board, ai_move[0], ai_move[1], ai_char)?;
             filled_box_count += 1;
             if is_win(board, ai_char) {
                 winner = ai_char;
@@ -84,6 +91,7 @@ fn main() {
         println!("[*] DRAW! [*]");
     }
     print_board(board);
+    Ok(())
 }
 
 fn clearscreen() {
@@ -100,35 +108,34 @@ fn move_num_to_array(num: usize, board_rows: usize) -> [usize; 2] {
     return [i, j];
 }
 
-fn ask_player_move(board: &Vec<Vec<char>>, human_char: char) -> [usize; 2] {
+fn ask_player_move(board: &Vec<Vec<char>>, human_char: char) -> Result<[usize; 2],String> {
     loop {
         println!("[+] Your move {} -> (1-9)?: ", human_char);
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
-            .expect("Failed to read line");
-        let player_move: usize = input.trim().parse().expect("Please enter a number");
+            .map_err(|_| "Failed to read line".to_string());
+        let player_move: usize = input.trim().parse().map_err(|_| "Please enter a number")?;
         let player_move_array = move_num_to_array(player_move, board.len());
         if board[player_move_array[0]][player_move_array[1]] != ' ' {
             println!("[!] Invalid: {} already filled", player_move)
         } else {
-            return player_move_array;
+            return Ok(player_move_array);
         }
     }
 }
 
-fn write_ai_log(data: String) {
+fn write_ai_log(data: &str) -> Result<(),String> {
     // Open the file in append mode
     let mut file = OpenOptions::new()
         .write(true)
         .append(true)
         .open("ai.log")
-        .expect("Failed to open file");
+        .map_err(|_| "Failed to open file".to_string())?;
 
     // Write the data to the file
-    if let Err(err) = file.write_all(data.as_bytes()) {
-        eprintln!("Error writing to file: {}", err);
-    }
+    file.write_all(data.as_bytes())
+        .map_err(|err| format!("Error writing to file: {}", err))
 }
 
 fn minimax(
@@ -187,12 +194,12 @@ fn minimax(
     }
 }
 
-fn ai_best_move(board: &mut Vec<Vec<char>>, ai_char: char, human_char: char) -> [usize; 2] {
+fn ai_best_move(board: &mut Vec<Vec<char>>, ai_char: char, human_char: char) -> Result<[usize; 2],String> {
     let x_length = board.len();
     let y_length = board[0].len();
     let mut best_score = -100;
     let mut best_move: [usize; 2] = Default::default();
-    write_ai_log("AI's Possible moves:\n".to_string());
+    write_ai_log("AI's Possible moves:\n")?;
     for i in 0..x_length {
         for j in 0..y_length {
             if board[i][j] == ' ' {
@@ -200,7 +207,7 @@ fn ai_best_move(board: &mut Vec<Vec<char>>, ai_char: char, human_char: char) -> 
                 let score = minimax(board, false, 1, ai_char, human_char);
                 board[i][j] = ' ';
                 let move_num = move_array_to_num([i, j], x_length);
-                write_ai_log(format!("- {} -> Score: {}\n", move_num, score));
+                write_ai_log(&format!("- {} -> Score: {}\n", move_num, score))?;
                 if score > best_score {
                     best_score = score;
                     best_move = [i, j];
@@ -208,21 +215,22 @@ fn ai_best_move(board: &mut Vec<Vec<char>>, ai_char: char, human_char: char) -> 
             }
         }
     }
-    write_ai_log(format!(
+    write_ai_log(&format!(
         "AI's Best move: {}\n\n",
         move_array_to_num(best_move, x_length)
-    ));
-    return best_move;
+    ))?;
+    Ok(best_move)
 }
 
-fn ask_player_char() -> char {
+fn ask_player_char() -> Result<char,String> {
     println!("[*] First/second (X/O)?:");
     let mut input = String::new();
     io::stdin()
         .read_line(&mut input)
-        .expect("Failed to read line");
-    let character: char = input.trim().chars().next().expect("No input provided.");
-    return character.to_ascii_uppercase();
+        .map_err(|_| "Failed to read line".to_string())?;
+    input.trim().chars().next()
+         .ok_or("No input provided.".to_string())
+         .map(|c| c.to_ascii_uppercase())
 }
 
 fn check_winner(board: &Vec<Vec<char>>) -> char {
@@ -272,12 +280,12 @@ fn is_win(board: &Vec<Vec<char>>, player_char: char) -> bool {
 }
 
 // add char into board box
-fn fill_box(board: &mut Vec<Vec<char>>, x: usize, y: usize, player_char: char) {
-    if let Some(row) = board.get_mut(x) {
-        if let Some(element) = row.get_mut(y) {
-            *element = player_char;
-        }
+fn fill_box(board: &mut Vec<Vec<char>>, x: usize, y: usize, player_char: char) -> Result<(),String> {
+    if x >= TOTAL_ROWS || y >= TOTAL_COLUMNS {
+        return Err("Filling an out-of-bounds box".to_string());
     }
+    board[x][y] = player_char;
+    Ok(())
 }
 
 // print tic tac toe board
