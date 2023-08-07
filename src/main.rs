@@ -44,7 +44,7 @@ fn play() -> Result<(),String> {
             print_board(board);
             println!(
                 "[+] AI move : X -> {}",
-                move_array_to_num(ai_move, TOTAL_ROWS)
+                move_array_to_num(ai_move)
             );
             if is_win(board, ai_char) {
                 winner = ai_char;
@@ -79,7 +79,7 @@ fn play() -> Result<(),String> {
                 winner = ai_char;
                 break;
             }
-            ai_last_move = move_array_to_num(ai_move, TOTAL_ROWS);
+            ai_last_move = move_array_to_num(ai_move);
         }
     }
     clearscreen();
@@ -98,13 +98,13 @@ fn clearscreen() {
     print!("\x1B[2J\x1B[1;1H");
 }
 
-fn move_array_to_num(move_arr: [usize; 2], board_rows: usize) -> usize {
-    return move_arr[0] * board_rows + move_arr[1] + 1;
+fn move_array_to_num(move_arr: [usize; 2]) -> usize {
+    return move_arr[0] * TOTAL_ROWS + move_arr[1] + 1;
 }
 
-fn move_num_to_array(num: usize, board_rows: usize) -> [usize; 2] {
-    let i: usize = (num - 1) / board_rows;
-    let j: usize = (num - 1) % board_rows;
+fn move_num_to_array(num: usize) -> [usize; 2] {
+    let i: usize = (num - 1) / TOTAL_ROWS;
+    let j: usize = (num - 1) % TOTAL_ROWS;
     return [i, j];
 }
 
@@ -121,7 +121,7 @@ fn ask_player_move(board: &Vec<Vec<char>>, human_char: char) -> Result<[usize; 2
                     println!("[!] Invalid: out of game board");
                     continue;
                 }
-                let player_move_array = move_num_to_array(player_move, TOTAL_ROWS);
+                let player_move_array = move_num_to_array(player_move);
                 if board[player_move_array[0]][player_move_array[1]] != ' ' {
                     println!("[!] Invalid: {} already filled", player_move)
                 } else {
@@ -166,13 +166,10 @@ fn minimax(
         }
     }
 
-    let x_length = board.len();
-    let y_length = board[0].len();
-
     if is_maximizing {
         let mut best_score = -100;
-        for i in 0..x_length {
-            for j in 0..y_length {
+        for i in 0..TOTAL_ROWS {
+            for j in 0..TOTAL_COLUMNS {
                 if board[i][j] == ' ' {
                     board[i][j] = ai_char;
                     let score = minimax(board, false, depth + 1, ai_char, human_char);
@@ -186,8 +183,8 @@ fn minimax(
         return best_score - depth;
     } else {
         let mut best_score = 100;
-        for i in 0..x_length {
-            for j in 0..y_length {
+        for i in 0..TOTAL_ROWS {
+            for j in 0..TOTAL_COLUMNS {
                 if board[i][j] == ' ' {
                     board[i][j] = human_char;
                     let score = minimax(board, true, depth + 1, ai_char, human_char);
@@ -203,18 +200,16 @@ fn minimax(
 }
 
 fn ai_best_move(board: &mut Vec<Vec<char>>, ai_char: char, human_char: char) -> Result<[usize; 2],String> {
-    let x_length = board.len();
-    let y_length = board[0].len();
     let mut best_score = -100;
     let mut best_move: [usize; 2] = Default::default();
     write_ai_log("AI's Possible moves:\n")?;
-    for i in 0..x_length {
-        for j in 0..y_length {
+    for i in 0..TOTAL_ROWS {
+        for j in 0..TOTAL_COLUMNS {
             if board[i][j] == ' ' {
                 board[i][j] = ai_char;
                 let score = minimax(board, false, 1, ai_char, human_char);
                 board[i][j] = ' ';
-                let move_num = move_array_to_num([i, j], x_length);
+                let move_num = move_array_to_num([i, j]);
                 write_ai_log(&format!("- {} -> Score: {}\n", move_num, score))?;
                 if score > best_score {
                     best_score = score;
@@ -225,7 +220,7 @@ fn ai_best_move(board: &mut Vec<Vec<char>>, ai_char: char, human_char: char) -> 
     }
     write_ai_log(&format!(
         "AI's Best move: {}\n\n",
-        move_array_to_num(best_move, x_length)
+        move_array_to_num(best_move)
     ))?;
     Ok(best_move)
 }
@@ -258,24 +253,21 @@ fn check_winner(board: &Vec<Vec<char>>) -> char {
     }
 
     let mut filled_count = 0;
-    let x_length = board.len();
-    let y_length = board[0].len();
-    for i in 0..x_length {
-        for j in 0..y_length {
+    for i in 0..TOTAL_ROWS {
+        for j in 0..TOTAL_COLUMNS {
             if board[i][j] != ' ' {
                 filled_count += 1;
             }
         }
     }
-    if filled_count == x_length * y_length {
+    if filled_count == MAX_FILL {
         return 'D';
     }
     return ' ';
 }
 
 fn is_win(board: &Vec<Vec<char>>, player_char: char) -> bool {
-    let x_length = board.len();
-    for i in 0..x_length {
+    for i in 0..TOTAL_ROWS {
         // check rows
         if board[i][0] == player_char && board[i][1] == player_char && board[i][2] == player_char {
             return true;
@@ -307,15 +299,13 @@ fn fill_box(board: &mut Vec<Vec<char>>, x: usize, y: usize, player_char: char) -
 
 // print tic tac toe board
 fn print_board(board: &Vec<Vec<char>>) {
-    let x_length = board.len();
-    let y_length = board[0].len();
 
     let mut builder = Builder::default();
-    for i in 0..x_length {
+    for i in 0..TOTAL_ROWS {
         let mut row: Vec<char> = Vec::new();
-        for j in 0..y_length {
+        for j in 0..TOTAL_COLUMNS {
             if board[i][j] == ' ' {
-                let box_num = (i * x_length + j + 1);
+                let box_num = (i * TOTAL_ROWS + j + 1);
                 let box_num_char = (b'0' + box_num as u8) as char;
                 row.push(box_num_char);
             } else {
