@@ -223,14 +223,23 @@ fn ai_best_move(board: &mut Vec<Vec<char>>, ai_char: char, human_char: char) -> 
 }
 
 fn ask_player_char() -> Result<char,String> {
-    println!("[*] First/second (X/O)?:");
-    let mut input = String::new();
-    io::stdin()
-        .read_line(&mut input)
-        .map_err(|_| "Failed to read line".to_string())?;
-    input.trim().chars().next()
-         .ok_or("No input provided.".to_string())
-         .map(|c| c.to_ascii_uppercase())
+    loop {
+        println!("[*] First/second (X/O)?:");
+        let mut input = String::new();
+        io::stdin()
+            .read_line(&mut input)
+            .map_err(|_| "Failed to read line".to_string())?;
+        let character = input.trim().chars().next()
+            .ok_or("No input provided.".to_string())
+            .map(|c| c.to_ascii_uppercase())?;
+        match character {
+            'X'|'O' => return Ok(character),
+            c => {
+                clearscreen();
+                println!("[!] Invalid: {}", c)
+            },
+        }
+    }
 }
 
 fn check_winner(board: &Vec<Vec<char>>) -> char {
