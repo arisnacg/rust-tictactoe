@@ -114,13 +114,21 @@ fn ask_player_move(board: &Vec<Vec<char>>, human_char: char) -> Result<[usize; 2
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
-            .map_err(|_| "Failed to read line".to_string());
-        let player_move: usize = input.trim().parse().map_err(|_| "Please enter a number")?;
-        let player_move_array = move_num_to_array(player_move, board.len());
-        if board[player_move_array[0]][player_move_array[1]] != ' ' {
-            println!("[!] Invalid: {} already filled", player_move)
-        } else {
-            return Ok(player_move_array);
+            .map_err(|_| "Failed to read line".to_string())?;
+        match input.trim().parse() {
+            Ok(player_move) => {
+                if player_move < 1 || player_move > 9 {
+                    println!("[!] Invalid: out of game board");
+                    continue;
+                }
+                let player_move_array = move_num_to_array(player_move, TOTAL_ROWS);
+                if board[player_move_array[0]][player_move_array[1]] != ' ' {
+                    println!("[!] Invalid: {} already filled", player_move)
+                } else {
+                    return Ok(player_move_array);
+                }
+            },
+            Err(_) => println!("[!] Invalid: please enter a number"),
         }
     }
 }
