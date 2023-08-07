@@ -12,11 +12,12 @@ use tabled::{
     settings::{object::Rows, Alignment, Modify, Style},
 };
 
+const TOTAL_ROWS: usize = 3;
+const TOTAL_COLUMNS: usize = 3;
+const MAX_FILL: usize = TOTAL_ROWS * TOTAL_COLUMNS;
+
 fn main() {
-    const TOTAL_ROWS: usize = 3;
-    const TOTAL_COLUMNS: usize = 3;
-    const MAX_FILL: usize = TOTAL_ROWS * TOTAL_COLUMNS;
-    let mut board = create_board(TOTAL_ROWS, TOTAL_COLUMNS);
+    let mut board = create_board();
 
     let mut game_end = false;
     clearscreen();
@@ -303,10 +304,10 @@ fn print_board(board: Vec<Vec<char>>) {
 }
 
 // create tic tac toe board
-fn create_board(total_rows: usize, total_colums: usize) -> Vec<Vec<char>> {
+fn create_board() -> Vec<Vec<char>> {
     let mut array: Vec<Vec<char>> = Vec::new();
-    for _ in 0..total_rows {
-        let row: Vec<char> = vec![' '; total_colums];
+    for _ in 0..TOTAL_ROWS {
+        let row: Vec<char> = vec![' '; TOTAL_COLUMNS];
         array.push(row);
     }
     return array;
