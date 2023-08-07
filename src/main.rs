@@ -30,57 +30,37 @@ fn play() -> Result<(),String> {
     clearscreen();
     println!("[*] WELCOME TO TICTACTOE GAME [*]");
     let human_char = ask_player_char()?;
-    let ai_char = (if human_char == 'X' { 'O' } else { 'X' });
+    let ai_char = if human_char == 'X' { 'O' } else { 'X' };
     let mut filled_box_count = 0;
     let mut winner = ' ';
     let mut ai_last_move = 0;
+    let mut is_player_turn = human_char == 'X';
 
     while filled_box_count < MAX_FILL {
-        if ai_char == 'X' {
-            clearscreen();
-            let ai_move = ai_best_move(board, ai_char, human_char)?;
-            fill_box(board, ai_move[0], ai_move[1], ai_char)?;
-            filled_box_count += 1;
-            print_board(board);
-            println!(
-                "[+] AI move : X -> {}",
-                move_array_to_num(ai_move)
-            );
-            if is_win(board, ai_char) {
-                winner = ai_char;
-                break;
-            }
-            let human_move = ask_player_move(board, human_char)?;
-            fill_box(board, human_move[0], human_move[1], human_char)?;
-            filled_box_count += 1;
-            if is_win(board, human_char) {
-                winner = human_char;
-                break;
-            }
-        } else {
+        if is_player_turn {
             clearscreen();
             print_board(board);
             if ai_last_move == 0 {
                 println!("[*] AI is waiting your move...");
             } else {
-                println!("[+] AI move: O -> {}", ai_last_move);
+                println!("[+] AI move: {} -> {}", ai_char, ai_last_move);
             }
             let human_move = ask_player_move(board, human_char)?;
             fill_box(board, human_move[0], human_move[1], human_char)?;
-            filled_box_count += 1;
-            if is_win(board, human_char) {
-                winner = human_char;
-                break;
-            }
+        } else {
             let ai_move = ai_best_move(board, ai_char, human_char)?;
             fill_box(board, ai_move[0], ai_move[1], ai_char)?;
-            filled_box_count += 1;
-            if is_win(board, ai_char) {
-                winner = ai_char;
-                break;
-            }
             ai_last_move = move_array_to_num(ai_move);
         }
+        match check_winner(board) {
+            ' ' => (),
+            w => {
+                winner = w;
+                break;
+            },
+        }
+        is_player_turn = !is_player_turn;
+        filled_box_count += 1;
     }
     clearscreen();
     if winner == human_char {
